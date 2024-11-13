@@ -1,0 +1,289 @@
+{% extends 'client/layouts.html' %}
+{% load static %}
+
+{% block title %}
+<title>Movie Recomm | {{movie.movieTitle}}</title>
+
+<style>
+    /* Container for horizontal scrolling */
+    .scroll-container {
+        display: flex;
+        /* Arrange the images horizontally */
+        overflow-x: auto;
+        /* Enable horizontal scrolling */
+        gap: 10px;
+        /* Space between images */
+        padding: 10px;
+        /* Padding around the container */
+    }
+
+    /* Style for each movie image */
+    .scroll-container img {
+        height: 150px;
+        /* Set height for images */
+        width: auto;
+        /* Maintain aspect ratio */
+        border-radius: 8px;
+        /* Rounded corners */
+        object-fit: cover;
+        /* Ensure the image covers its box */
+    }
+
+    /* Optional: Styling for the scroll container itself */
+    .scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: #888;
+        /* Color of the scrollbar */
+        border-radius: 4px;
+    }
+
+    .scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        /* Track color */
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+
+<!-- movies detail -->
+<div class="container mt-3">
+    {% for msg in messages %}
+
+    {% if msg.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+    <div class="alert alert-success">
+        {{msg}}
+    </div>
+    {% endif %}
+
+    {% if msg.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+    <div class="alert alert-danger">
+        {{msg}}
+    </div>
+    {% endif %}
+
+    {% endfor %}
+    <h2 class="text-muted text-center p-2">About '{{movie.movieTitle}}'</h2>
+    <div class="mb-3 shadow-lg">
+        <div class="row g-0 justify-content-evenly movie-detail-card">
+            <div class="col-md-2 p-2 movie-detail-img">
+                <img src="/{{movie.image}}" class="img-fluid rounded-start" alt="{{movie.movieTitle}}">
+            </div>
+            <div class="col-md-8 p-2 ">
+                <div class="card-body">
+                    <h3 class="card-title mb-3">{{movie.movieTitle}}</h3>
+                    <div class=" mb-3 fav-watch-trailer">
+                        {% if user.is_authenticated %}
+
+                        {% if movie in user.userprofile.favorite_movies.all %}
+                        <a href="{% url 'remove-from-favorites' movie.id %}" class="btn btn-danger"><i
+                                class="fas fa-heart"></i> Favorited</a>
+                        {% else %}
+                        <a href="{% url 'add-to-favorites' movie.id %}" class="btn btn-primary">
+                            <i class="fal fa-heart"></i> Favorite</a>
+                        {% endif %}
+
+                        {% if in_watchlist %}
+                        <button type="button" class="btn btn-secondary" disabled>
+                            <i class="far fa-plus"></i> Watchlist</button>
+                        {% else %}
+                        <a href="{% url 'add-to-watchlist' movie.id %}" class="btn btn-warning">
+                            <i class="far fa-plus"></i> Watchlist</a>
+                        {% endif %}
+                        {% else %}
+                        <a href="{% url 'add-to-favorites' movie.id %}" class="btn btn-primary">
+                            <i class="fal fa-heart"></i> Favorite</a>
+                        <a href="{% url 'add-to-watchlist' movie.id %}" class="btn btn-warning">
+                            <i class="far fa-plus"></i> Watchlist</a>
+                        {% endif %}
+
+                        <a href="{{ movie.trailerUrl }}" class="btn btn-outline-warning" target="_blank"
+                            rel="noopener noreferrer">
+                            <i class="fas fa-play-circle"></i> Watch Trailer
+                        </a>
+
+
+                    </div>
+                    <p class="card-text">Description:</p>
+                    <p class="card-text">{{movie.movieDescription}}</p>
+                    <p class="card-text">
+                        Genres:
+                        {% for genre in genres %}
+                        <a href="{% url 'movies-by-genre' genre.id %}"
+                            class="btn btn-outline-dark rounded-pill">{{genre.genreName}}</a>
+                        {% endfor %}
+                    </p>
+                    <p class="card-text">Released on:
+                        {{movie.movieReleaseDate}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- movie Detail end -->
+
+<!-- Review Form in Modal -->
+
+
+<!-- Display existing reviews -->
+
+<div class="container mt-3">
+
+    <h2 class="text-center">Reviews</h2>
+    {% if reviews %}
+
+    {% for review in reviews %}
+    <div class="card my-2">
+        <div class="card-header">
+            <strong> Rating: {{ review.rating }}</strong>
+            &lpar;
+            {% for i in "12345" %}
+            {% if forloop.counter <= review.rating %} <i class='bx bx-star'></i>
+                {% endif %}
+                {% endfor %}
+                &rpar;
+        </div>
+        <div class="card-body">
+            <blockquote class="blockquote mb-0">
+                <p>{{ review.review_text }}</p>
+                <footer class="blockquote-footer">{{ review.user.username }} </footer>
+            </blockquote>
+            <em>{{ review.created_at }}</em>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card">
+        <p class="card-body">No reviews yet. Be the first one to review!</p>
+    </div>
+    {% endif %}
+    <div class="review-modal m-2">
+        <!-- review form modal -->
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#reviewFormModal">
+            Leave a Review
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="reviewFormModal" tabindex="-1" aria-labelledby="reviewModal" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="POST" id="reviewForm" action="{% url 'add-review' movie.id %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title " id="reviewModal">Leave a Review</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex form-group form-control ">
+                                <div class="col-5">
+                                    <label for="rating" class="form-label">Rating (1 to 5):</label>
+                                    <strong>
+                                        <span id="ratingValue">
+                                            <i class='bx bx-star'></i><i class='bx bx-star'></i><i
+                                                class='bx bx-star'></i>
+                                        </span>
+                                    </strong>
+                                </div>
+                                <div class="col-7">
+                                    <input type="range" name="rating" class="form-range" min="1" max="5" id="rating"
+                                        oninput="updateRatingStars(this.value)">
+                                </div>
+                            </div>
+
+                            <div class="form-group form-control d-flex flex-wrap">
+                                <label for="review_text" class="form-label col-2">Review</label>
+                                <textarea name="review_text" name="review_text" id="review_text"
+                                    placeholder="Write your review here..." class="col-10"></textarea>
+                            </div>
+                            <div class="modal-footer d-flex justify-content-center">
+                                <div class=" text-center">
+                                    <button type="submit" class="btn btn-success mt-2 ">Submit Review</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- recommendation -->
+<div class="container mt-3 recommendation-container">
+    <h2 class="text-center">Similar in Genre</h2>
+    <!-- test recomm -->
+    <div class="scroll-container">
+        {% for movie in recommended_movies %}
+        <a href="{% url 'movie-detail' movie.id %}" class="text-decoration-none ">
+
+            <img src="{{ movie.image.url }}" alt="{{ movie.movieTitle }}"
+                style="width: 150px; height: 200px; object-fit: cover; border-radius: 8px;">
+        </a>
+        {% endfor %}
+    </div>
+    <!-- <div class="row row-cols-1 row-cols-md-4 g-4 m-3">
+        {% for movie in recommended_movies %}
+        <div class="col ">
+            <a href="{% url 'movie-detail' movie.id %}" class="text-decoration-none">
+                <div class="card movie-card">
+                    <div class="card-header p-2">
+
+                        <img src="/{{ movie.image }}" class="card-img-top " alt="{{ movie.movieTitle }}" height="280">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title"><strong>{{ movie.movieTitle }}</strong></h5>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div> -->
+    <!-- test recomm -->
+
+</div>
+<!-- recommendation -->
+
+
+<script>
+    // Reset the form when the modal is closed
+    var reviewModal = document.getElementById('reviewFormModal');
+    reviewModal.addEventListener('hidden.bs.modal', function () {
+        // Clear all form fields
+        var form = document.getElementById('reviewForm');
+        form.reset();
+        // Resets the form to its initial state (empty fields)
+    });
+</script>
+
+<!-- rating value in number -->
+<!-- <script>
+    const ratingInput = document.getElementById('rating');
+    const ratingValue = document.getElementById('ratingValue');
+
+    // Function to update the displayed value
+    ratingInput.addEventListener('input', function () {
+        ratingValue.textContent = ratingInput.value;
+        // Update the displayed value
+    });
+</script> -->
+
+<script>
+    function updateRatingStars(value) {
+        const starContainer = document.getElementById("ratingValue");
+        starContainer.innerHTML = ""; // Clear current stars
+
+        // Add the icon element 'value' times
+        for (let i = 0; i < value; i++) {
+            starContainer.innerHTML += "<i class='bx bx-star'></i>";
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends 'client/layouts.html' %}
+{% load static %}
+
+{% block title %}
+<title>User Profile</title>
+<style>
+    /* Container for horizontal scrolling */
+    .scroll-container {
+        display: flex;
+        /* Arrange the images horizontally */
+        overflow-x: auto;
+        /* Enable horizontal scrolling */
+        gap: 10px;
+        /* Space between images */
+        padding: 10px;
+        /* Padding around the container */
+    }
+
+    /* Style for each movie image */
+    .scroll-container img {
+        height: 150px;
+        /* Set height for images */
+        width: auto;
+        /* Maintain aspect ratio */
+        border-radius: 8px;
+        /* Rounded corners */
+        object-fit: cover;
+        /* Ensure the image covers its box */
+    }
+
+    /* Optional: Styling for the scroll container itself */
+    .scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: #888;
+        /* Color of the scrollbar */
+        border-radius: 4px;
+    }
+
+    .scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        /* Track color */
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+
+<div class="container profile ">
+    <h2 class="text-center">{{ user_profile.user.username }}'s Profile</h2>
+    {% for msg in messages %}
+
+    {% if msg.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+    <div class="alert alert-success">
+        {{msg}}
+    </div>
+    {% endif %}
+
+    {% if msg.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+    <div class="alert alert-danger">
+        {{msg}}
+    </div>
+    {% endif %}
+
+    {% endfor %}
+    <div class="d-flex ">
+
+        <div class="user-profile-img col-4 ">
+
+            {% if user_profile.userImage %}
+            <img src="{{ user_profile.userImage.url }}" alt="{{ user_profile.user.username }}"
+                style="width:150px; height:150px;" class="rounded-circle">
+            {% else %}
+            <img src="{% static 'profile_images/user_icon.png' %}" alt="No image" style="width:150px; height:150px;"
+                class="rounded-circle">
+            {% endif %}
+
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#editImageModal">
+                <i class="fal fa-edit"></i>
+            </button>
+
+            <!-- edit profile image Modal -->
+            <div class="modal fade" id="editImageModal" tabindex="-1" aria-labelledby="editImageLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <form method="POST" enctype="multipart/form-data"
+                            action="{% url 'edit-profile-pic' user_profile.user.username %}" id="imageForm">
+                            {% csrf_token %}
+
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="imageModalLabel">Edit Profile Image</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                {% if user_profile.userImage %}
+                                <img src="{{ user_profile.userImage.url }}"
+                                    alt="{{ user_profile.user.username }}'s profile picture" class="mb-2"
+                                    style="width:150px; height:150px;">
+                                {% else %}
+                                <p>No previous picture available.</p>
+                                {% endif %}
+                                <input type="file" name="userImage" class="form-control" onchange="previewImage(event)">
+                                <div class="text-center mt-2">
+                                    <img id="imagePreview" src="" alt="Image Preview" class="mb-2"
+                                        style="width:150px; height:150px;">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="user-profile-bio col-8">
+
+            <h3>
+                Bio:
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#editBioModal">
+                    <i class="fal fa-edit"></i>
+                </button>
+            </h3>
+            <!-- edit profile bio Modal -->
+            <div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{% url 'edit-profile-bio' user_profile.user.username %}"
+                            id="bioForm">
+                            {% csrf_token %}
+
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="bioModalLabel">Edit Bio</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <textarea name="bio" class="form-control"
+                                    placeholder="Enter new bio">{{ user_profile.bio }}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <p>{{ user_profile.bio|default:"This user has no bio yet." }}</p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- favorite movies -->
+    <h3 class="text-center">Favorite Movies</h3>
+
+    {% if favorite_movies %}
+    <div class="scroll-container">
+        {% for movie in favorite_movies %}
+        <a href="{% url 'movie-detail' movie.id %}" class="text-decoration-none ">
+
+            <img src="{{ movie.image.url }}" alt="{{ movie.movieTitle }}"
+                style="width: 150px; height: 200px; object-fit: cover; border-radius: 8px;">
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No favorite movies selected.</p>
+    {% endif %}
+    <!-- favorite movies -->
+
+</div>
+
+
+<!-- user reviews -->
+
+<div class="container mt-3">
+
+    <h2 class="text-center">Recent Reviews</h2>
+    {% if page_obj %}
+
+    {% for review in page_obj %}
+    <div class="card my-2">
+        <div class="card-header d-flex justify-content-between">
+            <div class="movie-title">
+                <strong>
+                    <a href="{% url 'movie-detail' review.movie.id %}" class="text-decoration-none">
+                        {{ review.movie.movieTitle }}
+                    </a>
+                </strong>
+            </div>
+            <div class="review-edit">
+                <a href="#">Edit</a>
+                &#8725;
+                <a href="{% url 'delete-review' review.id %}"
+                    onclick="return confirm('Are you sure you want to DELETE this item?')">
+                    Delete
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <blockquote class="blockquote mb-0">
+                <p> <strong> Rating: {{ review.rating }}</strong>
+                    &lpar;
+                    {% for i in "12345" %}
+                    {% if forloop.counter <= review.rating %} <i class='bx bx-star'></i>
+                        {% endif %}
+                        {% endfor %}
+                        &rpar;
+                </p>
+                <p>{{ review.review_text }}</p>
+            </blockquote>
+            <em>{{ review.created_at }}</em>
+        </div>
+    </div>
+    {% endfor %}
+    <!-- pagination -->
+    <nav aria-label="Page navigation example" class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% else %}
+
+            <li class="page-item disabled">
+                <a class="page-link">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% else %}
+    <div class="card">
+        <p>No reviews yet. Why not give your opinion?? :&rbrace;</p>
+    </div>
+    {% endif %}
+</div>
+<!-- user reviews -->
+
+
+<!-- similar to your taste -->
+
+
+<script>
+
+    // Reset the form when the modal is closed
+    var bioModal = document.getElementById('editBioModal');
+    bioModal.addEventListener('hidden.bs.modal', function () {
+        // Clear all form fields
+        var form = document.getElementById('bioForm');
+        form.reset();  // Resets the form to its initial state (empty fields)
+    });
+    // Reset the form when the modal is closed
+    var imageModal = document.getElementById('editImageModal');
+    imageModal.addEventListener('hidden.bs.modal', function () {
+        // Clear all form fields
+        var form = document.getElementById('imageForm');
+        form.reset();  // Resets the form to its initial state (empty fields)
+        document.getElementById('imagePreview').style.display = 'none';
+    });
+
+</script>
+<script>
+    // preview image
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var imagePreview = document.getElementById('imagePreview');
+            imagePreview.style.display = 'block'; // Make sure the image preview is visible
+            imagePreview.src = reader.result; // Set the src to the selected file's data URL
+        }
+        reader.readAsDataURL(event.target.files[0]); // Read the image file
+    }
+</script>
+
+{% endblock %}

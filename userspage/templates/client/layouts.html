@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% block title %}
+    {{section.title}}
+    {% endblock %}
+    <link rel="shortcut icon" href="{% static 'images/logo.png' %}" type="image/x-icon">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- boxicions -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- fontawesome cdn link css -->
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+        integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+
+    <!-- custom css -->
+    <link rel="stylesheet" href="{% static 'css/main_style.css' %}">
+
+</head>
+
+<body>
+    <div class="page-container">
+
+        <header class="p-3 text-bg-dark">
+            <div class="container-fluid">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                    <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                        <img src="{% static 'images/logo.png' %}" alt="" width="30">
+                    </a>
+
+                    <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                        <li><a href="{% url 'homepage' %}" class="nav-link px-2 text-secondary">Home</a></li>
+                        <li><a href="{% url 'movies-list' %}" class="nav-link px-2 text-white">Movies</a></li>
+                        <li><a href="{% url 'genres-list' %}" class="nav-link px-2 text-white">Genres</a></li>
+                        <li><a href="#" class="nav-link px-2 text-white">FAQs</a></li>
+                        <li><a href="#" class="nav-link px-2 text-white">About</a></li>
+                    </ul>
+
+                    <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search"
+                        action="{% url 'movie-search' %}" method="GET">
+                        <input type="search" name="query" class="form-control form-control-dark text-bg-light"
+                            placeholder="Search..." aria-label="Search">
+                    </form>
+
+                    {% if user.is_authenticated %}
+                    <div class="flex-shrink-0 dropdown">
+                        <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.userprofile.userImage %}
+                            <img src="{{ user.userprofile.userImage.url }}" alt="{{ user.userprofile.user.username }}"
+                                width="32" height="32" class="rounded-circle">
+                            {% else %}
+                            <img src="{% static 'profile_images/user_icon.png' %}" alt="No image" width="32" height="32"
+                                class="rounded-circle">
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu text-small shadow">
+                            <li>
+                                <p class="text-muted text-center">{{ user.username }}</p>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'user-profile' user.username %}">Profile</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'watch-list' %}">WatchList</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'logout' %}">Sign out</a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="text-end">
+                        <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Login</a>
+                        <a href="{% url 'register' %}" class="btn btn-warning">Sign-up</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        <div class="main ">
+            {% block main_content %}
+
+            {% endblock %}
+        </div>
+
+        <div class="container-fluid">
+            <footer
+                class="main-footer bg-light d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+                <div class="col-md-4 d-flex align-items-center">
+                    <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
+                        <svg class="bi" width="30" height="24">
+                            <use xlink:href="#bootstrap" />
+                        </svg>
+                    </a>
+                    <span class="mb-3 mb-md-0 text-body-secondary">&copy; 2024 Company, Inc</span>
+                </div>
+
+                <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#"><i class="fab fa-twitter"></i></a>
+                    </li>
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#"><i class="fab fa-instagram"></i></a>
+                    </li>
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#"><i class="fab fa-facebook"></i></a>
+                    </li>
+                </ul>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>

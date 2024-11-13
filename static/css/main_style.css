@@ -1,0 +1,34 @@
+/* Main container */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Content should grow to push footer down */
+.main {
+    flex: 1;
+    padding-top: 10px;
+    border: 2px rgb(0, 0, 0);
+}
+
+.user-profile-img img {
+    border-color: black;
+    border-width: 2px;
+}
+
+/* Footer styling */
+.main-footer {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}

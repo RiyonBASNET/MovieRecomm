@@ -1,0 +1,33 @@
+{% extends 'client/layouts.html' %}
+{% load static %}
+
+{% block title %}
+<title>Movies Recomm | Genres </title>
+{% endblock %}
+
+{% block main_content %}
+
+<!-- movies available -->
+<div class="container-fluid mt-3">
+    <h2 class="text-muted text-center p-2">Genres</h2>
+    <div class="row row-cols-1 row-cols-md-3 g-4 m-3">
+        {% for genre in genres %}
+        <div class="col">
+            <a href="{% url 'movies-by-genre' genre.id %}">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ genre.genreName }}</h5>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<!-- movies available -->
+
+
+
+
+{% endblock %}

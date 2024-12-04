@@ -141,7 +141,7 @@ def user_profile(request,username):
     page_number = request.GET.get('page')
     page_obj = review_paginator.get_page(page_number)
     
-    print(user_profile.userImage.url)
+
     context={
         'user_profile':user_profile,
         'page_obj':page_obj,
@@ -242,24 +242,27 @@ def add_review(request, movieId):
                     rating = int(rating)  # Convert the rating to an integer
                     if rating < 1 or rating > 5:
                         raise ValueError("Rating must be between 1 and 5.")
+                    
+                    existing_review = Review.objects.filter(movie=movie, user=request.user).first()
+                    if existing_review:
+                        messages.error(request, "You have already reviewed this movie.")
+                        return redirect('movie-detail', movieId=movieId)
+                    
+                    review = Review.objects.create(
+                        movie=movie,
+                        user=request.user,
+                        rating=rating,
+                        review_text=review_text
+                    )
+
+                    movie.update_rating()
+
+                    messages.success(request, "Review submitted successfully!")
+                    return redirect('movie-detail', movieId=movieId)  
+            
                 except ValueError:
                     messages.error(request, "Invalid rating. Please enter a number between 1 and 5.")
                     return render(request, 'movieDetail.html', {'movie': movie})
-
-                existing_review = Review.objects.filter(movie=movie, user=request.user).first()
-                if existing_review:
-                    messages.error(request, "You have already reviewed this movie.")
-                    return redirect('movie-detail', movieId=movieId)
-                
-                review = Review.objects.create(
-                    movie=movie,
-                    user=request.user,
-                    rating=rating,
-                    review_text=review_text
-                )
-
-                messages.success(request, "Review submitted successfully!")
-                return redirect('movie-detail', movieId=movieId)  
 
             else:
                 messages.error(request, "Please provide both rating and review text.")

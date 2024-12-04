@@ -37,31 +37,14 @@ def movies(request):
 
 def movieDetails(request,movieId):
     movie=MovieInfo.objects.get(id=movieId)
-    
+    genres = movie.genres.all()
 
     in_watchlist=False
 
     if request.user.is_authenticated:
         in_watchlist = WatchList.objects.filter(user=request.user, movie=movie).exists()
-    
-    
 
-    #Movie recommendation >> content-based filtering, genre-based filtering
-    # recommended_movies = MovieInfo.objects.filter(genres__in=genres).exclude(id=movieId).distinct()[:8]
-
-    genres = movie.genres.all()
-
-    recommended_movies = set()  # Use a set to collect all recommendations and avoid duplicates
-
-    for genre in genres:
-        # recommended_movies = get_recommended_movies(genreId=genre.id)
-        genre_recommendations = get_recommended_movies(genreId=genre.id)  # Get recommended movies for each genre
-        recommended_movies.update(genre_recommendations)  # Add genre recommendations to the main set
-
-    # Convert the set back to a list if needed for further processing or rendering
-    recommended_movies = list(recommended_movies)[:12]
-
-
+    recommended_movies = get_recommended_movies(movie, MovieInfo.objects.all())[:8]
 
     reviews=Review.objects.filter(movie=movie).order_by('-created_at')[:5]
 
@@ -294,18 +277,52 @@ def delete_review(request,review_id):
     messages.error(request, "Review deleted.")
     return redirect('user-profile',username=request.user.username)
 
-def get_recommended_movies(genreId):
-    # Step 1: Retrieve all movies that have specified genre
-    movies_list = list(MovieInfo.objects.filter(genres__id=genreId))
+def get_recommended_movies(target_movie, all_movies):
+    # Step 1: Retrieve genre IDs of the target movie
+    target_genre_ids = set(target_movie.genres.values_list('id', flat=True))
 
-    # Step 2: Sort movies by release date in descending order using Bubble Sort
-    for i in range(len(movies_list)):
-        for j in range(0, len(movies_list) - i - 1):
-            if movies_list[j].movieReleaseDate > movies_list[j + 1].movieReleaseDate:
-                # Swap if the release date of the current movie is greater than the next
-                movies_list[j], movies_list[j + 1] = movies_list[j + 1], movies_list[j]
+    # Step 2: Initialize an empty list to store matching movies with scores
+    matching_movies = []
 
-    return movies_list
+    # Step 3: Perform linear search to calculate genre matches
+    for movie in all_movies:
+        if movie == target_movie:
+            continue  # Skip the target movie itself
+
+        # Retrieve genre IDs of the current movie
+        movie_genre_ids = set(movie.genres.values_list('id', flat=True))
+
+        # Calculate the number of shared genres (shortest "distance" logic)
+        genre_match_count = len(target_genre_ids.intersection(movie_genre_ids))
+
+        if genre_match_count > 0:
+            # Add movie and its match count to the list
+            matching_movies.append((movie, genre_match_count))
+
+    # Step 4: Sort movies by genre match count (descending) and release date (descending)
+    matching_movies.sort(key=lambda x: (-x[1], x[0].movieReleaseDate), reverse=False)
+
+    # Step 5: Extract the sorted movies from the list of tuples
+    recommended_movies = [movie for movie, _ in matching_movies]
+
+    return recommended_movies
+
+
+
+
+# def get_recommended_movies(genreId):
+#     # Step 1: Retrieve all movies that have specified genre
+#     movies_list = list(MovieInfo.objects.filter(genres__id=genreId))
+
+#     # Step 2: Sort movies by release date in descending order using Bubble Sort
+#     for i in range(len(movies_list)):
+#         for j in range(0, len(movies_list) - i - 1):
+#             if movies_list[j].movieReleaseDate > movies_list[j + 1].movieReleaseDate:
+#                 # Swap if the release date of the current movie is greater than the next
+#                 movies_list[j], movies_list[j + 1] = movies_list[j + 1], movies_list[j]
+
+#     return movies_list
+
 
 
 

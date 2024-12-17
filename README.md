@@ -1,1 +1,1 @@
-This is a movie recomendation site i did for 2nd my 2nd major project for college.
+This is a movie recomendation site i did as my 2nd college project.
